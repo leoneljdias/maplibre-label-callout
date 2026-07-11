@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>maplibre-label-callout demo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="https://unpkg.com/maplibre-gl@4/dist/maplibre-gl.css" rel="stylesheet" />
+    <script src="https://unpkg.com/maplibre-gl@4/dist/maplibre-gl.js"></script>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        height: 100%;
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        background: #0e1210;
+      }
+      #map {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* header bar */
+      .header {
+        position: fixed;
+        top: 12px;
+        left: 12px;
+        right: 12px;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(8px);
+        border-radius: 12px;
+        padding: 10px 18px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+        font-size: 13px;
+        pointer-events: auto;
+      }
+      .header h1 {
+        font-size: 15px;
+        font-weight: 600;
+        color: #16150f;
+        margin: 0;
+        white-space: nowrap;
+      }
+      .header .tagline {
+        color: #64748b;
+        display: none;
+      }
+      .header .links {
+        margin-left: auto;
+        display: flex;
+        gap: 8px;
+      }
+      .header .links a {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 5px 12px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: 500;
+        transition: background 0.15s;
+      }
+      .header .links a.github {
+        background: #16150f;
+        color: #fff;
+      }
+      .header .links a.github:hover {
+        background: #2a2820;
+      }
+      .header .links a.npm {
+        background: #cb3837;
+        color: #fff;
+      }
+      .header .links a.npm:hover {
+        background: #b32e2d;
+      }
+      .header .links a.demo-link {
+        color: #64748b;
+      }
+      .header .links a.demo-link:hover {
+        background: #f1f5f9;
+        color: #16150f;
+      }
+
+      @media (min-width: 640px) {
+        .header .tagline {
+          display: inline;
+        }
+      }
+
+      /* label styling */
+      .lc3d-label {
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+
+    <div class="header">
+      <h1>maplibre-label-callout</h1>
+      <span class="tagline">labels with connector lines</span>
+      <span class="links">
+        <a class="github" href="https://github.com/leoneljdias/maplibre-label-callout">GitHub</a>
+        <a class="npm" href="https://www.npmjs.com/package/@leoneljdias/maplibre-label-callout"
+          >npm</a
+        >
+      </span>
+    </div>
+
+    <script src="../dist/index.umd.js"></script>
+    <script src="ports.js"></script>
+    <script>
+      const map = new maplibregl.Map({
+        container: "map",
+        style: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
+        center: [10, 25],
+        zoom: 2.1,
+        pitch: 50,
+      });
+
+      map.on("load", () => {
+        map.getStyle().layers.forEach((l) => {
+          if (l.layout && l.layout["text-field"]) {
+            map.setLayoutProperty(l.id, "visibility", "none");
+          }
+        });
+        const schemes = [
+          { bg: "#a8d8ea", text: "#1a365d", line: "#2980b9", border: "#7ec8e3" },
+          { bg: "#f4acb7", text: "#7f1d1d", line: "#c0392b", border: "#e8909e" },
+          { bg: "#b5e2c0", text: "#14532d", line: "#27ae60", border: "#96d6a7" },
+          { bg: "#f8edb5", text: "#713f12", line: "#b8860b", border: "#f0e096" },
+          { bg: "#d4b8e0", text: "#4a1d6e", line: "#8e44ad", border: "#c4a0d4" },
+          { bg: "#fad4a8", text: "#7c2d12", line: "#d35400", border: "#f0c08a" },
+          { bg: "#f8c8dc", text: "#831843", line: "#d45d79", border: "#f0b0cc" },
+        ];
+        function pick(id) {
+          let h = 0;
+          for (let i = 0; i < id.length; i++) h = (h << 5) - h + id.charCodeAt(i);
+          return schemes[Math.abs(h) % schemes.length];
+        }
+        PORTS_DATA.features.forEach((f) => {
+          const s = pick(f.properties.portid);
+          f.properties.c_bg = s.bg;
+          f.properties.c_text = s.text;
+          f.properties.c_line = s.line;
+          f.properties.c_border = s.border;
+        });
+        const callouts = new LineCallout3D(map, {
+          data: PORTS_DATA,
+          idProperty: "portid",
+          priority: (p) => p.vessel_count_total || 0,
+          template: (p) => `
+          <div style="font-weight:600;letter-spacing:-.01em;color:${p.c_text}">${p.portname}</div>
+          <div style="color:${p.c_text};opacity:.7;font-size:10.5px">${p.country} · ${(p.vessel_count_total || 0).toLocaleString()} vessels</div>
+        `,
+          offset: [0, -46],
+          maxLabels: 30,
+          lineColor: (p) => p.c_line,
+          dotColor: (p) => p.c_bg,
+          labelBackground: (p) => p.c_bg,
+          labelColor: (p) => p.c_text,
+          labelBorder: (p) => "1px solid " + p.c_border,
+          labelBorderRadius: "8px",
+          labelShadow: "0 2px 8px rgba(0,0,0,.08)",
+          markerPaint: {
+            "circle-radius": [
+              "interpolate",
+              ["linear"],
+              ["get", "vessel_count_total"],
+              0,
+              2,
+              5000,
+              7,
+            ],
+            "circle-color": ["coalesce", ["feature-state", "callout_color"], "#94a3b8"],
+            "circle-opacity": 0.85,
+            "circle-stroke-width": 0.5,
+            "circle-stroke-color": "#ffffff",
+          },
+          labelPadding: "6px 14px 6px 14px",
+          //onClick: (props) => alert(props.portname + ", " + props.country),
+        });
+      });
+    </script>
+  </body>
+</html>
