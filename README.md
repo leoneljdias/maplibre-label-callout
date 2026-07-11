@@ -6,7 +6,7 @@ Labels with connector lines for MapLibre GL JS.
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![npm bundle size](https://img.shields.io/bundlephobia/min/@leoneljdias/maplibre-label-callout)](https://bundlephobia.com/package/@leoneljdias/maplibre-label-callout)
 
-![demo](demo/screenshot.png)
+![demo](https://raw.githubusercontent.com/leoneljdias/maplibre-label-callout/main/demo/screenshot.png)
 
 [Demo](https://leoneljdias.github.io/maplibre-label-callout/demo/) · [npm](https://www.npmjs.com/package/@leoneljdias/maplibre-label-callout)
 
