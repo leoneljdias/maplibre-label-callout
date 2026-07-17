@@ -168,14 +168,6 @@
       .lc3d-label {
         white-space: nowrap;
       }
-      .lc3d-label[data-angle-deg]::after {
-        content: attr(data-angle-deg) "°";
-        display: block;
-        font-size: 10px;
-        opacity: 0.6;
-        text-align: center;
-        margin-top: 2px;
-      }
     </style>
   </head>
   <body>
@@ -320,24 +312,18 @@
           <div style="color:${p.c_text};opacity:.7;font-size:10.5px">${p.country} · ${(p.vessel_count_total || 0).toLocaleString()} vessels</div>
         `,
           offset: [0, -46],
-          maxLabels: 30,
+          maxLabels: 200,
+          labelPosition: "onlyTop",
+          padding: 25,
           lineColor: (p) => p.c_line,
-          dotColor: (p) => p.c_bg,
+          dotColor: (p) => p.c_line,
           labelBackground: (p) => p.c_bg,
           labelColor: (p) => p.c_text,
           labelBorder: (p) => "1px solid " + p.c_border,
           labelBorderRadius: "8px",
           labelShadow: "0 2px 8px rgba(0,0,0,.08)",
           markerPaint: {
-            "circle-radius": [
-              "interpolate",
-              ["linear"],
-              ["get", "vessel_count_total"],
-              0,
-              2,
-              5000,
-              7,
-            ],
+            "circle-radius": 4,
             "circle-color": ["coalesce", ["feature-state", "callout_color"], "#94a3b8"],
             "circle-opacity": 0.85,
             "circle-stroke-width": 0.5,

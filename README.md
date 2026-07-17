@@ -52,38 +52,41 @@ const callouts = new LineCallout3D(map, {
 ```
 
 Markers are rendered as a native MapLibre `circle` layer (GPU-accelerated).
-Labels are positioned with greedy collision avoidance, updated on every
-move/zoom. Only features in the viewport are considered. Performance
-stays bounded by `maxLabels`.
+Labels are positioned with spatial-hash collision detection, priority-based
+eviction, and exhaustive backfill. Supports Mercator and Globe projections.
+Only in-viewport features are considered. Performance stays bounded by `maxLabels`.
 
 ## Options
 
-| Option                | Default                                              | Description                                           |
-| --------------------- | ---------------------------------------------------- | ----------------------------------------------------- |
-| `data`                | —                                                    | GeoJSON FeatureCollection or URL (required)           |
-| `template`            | `(p) => …`                                           | Function returning label HTML from feature properties |
-| `idProperty`          | `null`                                               | Property name for deduplication                       |
-| `priority`            | `null`                                               | `(props) => number`, higher values placed first       |
-| `maxLabels`           | `Infinity`                                           | Max visible labels at once                            |
-| `offset`              | `[0, -56]`                                           | `[x, y]` px offset from anchor                        |
-| `connectSide`         | `'bottom'`                                           | `'top'`, `'bottom'`, `'left'`, `'right'`, or `'auto'` |
-| `boxSize`             | `[150, 34]`                                          | Approx `[w, h]` for collision detection               |
-| `padding`             | `6`                                                  | Min px gap between label boxes                        |
-| `maxOffset`           | `3`                                                  | Max multiplier for offset growth to avoid collisions  |
-| `lineColor`           | `'#000000'`                                          | Connector line color (or `(props) => color`)          |
-| `lineWidth`           | `1.25`                                               | Connector line width                                  |
-| `lineDash`            | `null`                                               | Connector line dash array                             |
-| `dotRadius`           | `3.5`                                                | Anchor dot radius                                     |
-| `dotColor`            | `'#c65b2e'`                                          | Anchor dot color (or `(props) => color`)              |
-| `labelBackground`     | `'#ffffff'`                                          | Label background (or `(props) => …`)                  |
-| `labelColor`          | `'#16150f'`                                          | Label text color                                      |
-| `labelPadding`        | `'7px 12px 7px 16px'`                                | Label padding                                         |
-| `labelBorder`         | `'1px solid #e2e8f0'`                                | Label border                                          |
-| `labelBorderRadius`   | `'8px'`                                              | Label border radius                                   |
-| `labelAccentColor`    | `null`                                               | Left border accent color                              |
-| `onClick`             | `null`                                               | `(props, feature, event) => …`                        |
-| `minZoom` / `maxZoom` | `-∞` / `∞`                                           | Zoom bounds                                           |
-| `markerPaint`         | `{ circle-radius: 3, circle-color: '#c65b2e', ... }` | Paint object for the marker circle layer              |
+| Option                | Default                                              | Description                                                                                                         |
+| --------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `data`                | —                                                    | GeoJSON FeatureCollection or URL (required)                                                                         |
+| `template`            | `(p) => …`                                           | Function returning label HTML from feature properties                                                               |
+| `idProperty`          | `null`                                               | Property name for deduplication                                                                                     |
+| `priority`            | `null`                                               | `(props) => number`, higher values placed first                                                                     |
+| `maxLabels`           | `Infinity`                                           | Max visible labels at once                                                                                          |
+| `offset`              | `[0, -56]`                                           | `[x, y]` px offset from anchor                                                                                      |
+| `connectSide`         | `'bottom'`                                           | `'top'`, `'bottom'`, `'left'`, `'right'`, or `'auto'`                                                               |
+| `labelPosition`       | `'fixed'`                                            | `'fixed'`, `'auto'`, `'onlyTop'`, `'onlyBottom'`, `'onlyLeft'`, `'onlyRight'`, `'onlyVertical'`, `'onlyHorizontal'` |
+| `boxSize`             | `[150, 34]`                                          | Approx `[w, h]` for collision detection                                                                             |
+| `padding`             | `6`                                                  | Min px gap between label boxes                                                                                      |
+| `maxOffset`           | `3`                                                  | Max multiplier for offset growth to avoid collisions                                                                |
+| `lineColor`           | `'#000000'`                                          | Connector line color (or `(props) => color`)                                                                        |
+| `lineWidth`           | `1.25`                                               | Connector line width                                                                                                |
+| `lineDash`            | `null`                                               | Connector line dash array                                                                                           |
+| `minLineLength`       | `10`                                                 | Minimum connector line length in px                                                                                 |
+| `maxLineLength`       | `50`                                                 | Maximum connector line length in px                                                                                 |
+| `dotRadius`           | `3.5`                                                | Anchor dot radius                                                                                                   |
+| `dotColor`            | `'#c65b2e'`                                          | Anchor dot color (or `(props) => color`)                                                                            |
+| `labelBackground`     | `'#ffffff'`                                          | Label background (or `(props) => …`)                                                                                |
+| `labelColor`          | `'#16150f'`                                          | Label text color                                                                                                    |
+| `labelPadding`        | `'7px 12px 7px 16px'`                                | Label padding                                                                                                       |
+| `labelBorder`         | `'1px solid #e2e8f0'`                                | Label border                                                                                                        |
+| `labelBorderRadius`   | `'8px'`                                              | Label border radius                                                                                                 |
+| `labelAccentColor`    | `null`                                               | Left border accent color                                                                                            |
+| `onClick`             | `null`                                               | `(props, feature, event) => …`                                                                                      |
+| `minZoom` / `maxZoom` | `-∞` / `∞`                                           | Zoom bounds                                                                                                         |
+| `markerPaint`         | `{ circle-radius: 3, circle-color: '#c65b2e', ... }` | Paint object for the marker circle layer                                                                            |
 
 ## API
 
