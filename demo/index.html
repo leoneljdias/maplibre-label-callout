@@ -4,8 +4,8 @@
     <meta charset="utf-8" />
     <title>maplibre-label-callout demo</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link href="https://unpkg.com/maplibre-gl@4/dist/maplibre-gl.css" rel="stylesheet" />
-    <script src="https://unpkg.com/maplibre-gl@4/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.css" rel="stylesheet" />
+    <script src="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.js"></script>
     <style>
       *,
       *::before,
@@ -137,6 +137,26 @@
       .header .btns a.btn-npm:hover {
         background: #f3f4f6;
       }
+      .header .btns button.btn-globe {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 6px 14px;
+        border-radius: 8px;
+        border: 1.5px solid #6ee7b7;
+        color: #065f46;
+        background: transparent;
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition:
+          background 0.15s,
+          color 0.15s;
+      }
+      .header .btns button.btn-globe:hover {
+        background: #d1fae5;
+      }
       @media (max-width: 374px) {
         .header .btns a {
           font-size: 12px;
@@ -147,6 +167,14 @@
       /* label styling */
       .lc3d-label {
         white-space: nowrap;
+      }
+      .lc3d-label[data-angle-deg]::after {
+        content: attr(data-angle-deg) "°";
+        display: block;
+        font-size: 10px;
+        opacity: 0.6;
+        text-align: center;
+        margin-top: 2px;
       }
     </style>
   </head>
@@ -172,6 +200,25 @@
           />
         </span>
         <span class="btns">
+          <button class="btn-globe" id="globeToggle">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M2 12h20" />
+              <path
+                d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"
+              />
+            </svg>
+            <span id="globeLabel">Globe</span>
+          </button>
           <a class="btn-github" href="https://github.com/leoneljdias/maplibre-label-callout">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
               <path
@@ -221,6 +268,26 @@
         map.getStyle().layers.forEach((l) => {
           if (l.layout && l.layout["text-field"]) {
             map.setLayoutProperty(l.id, "visibility", "none");
+          }
+        });
+
+        const globeBtn = document.getElementById("globeToggle");
+        const globeLabel = document.getElementById("globeLabel");
+        let isGlobe = false;
+        let savedPitch = map.getPitch();
+        let savedBearing = map.getBearing();
+        globeBtn.addEventListener("click", () => {
+          isGlobe = !isGlobe;
+          if (isGlobe) {
+            savedPitch = map.getPitch();
+            savedBearing = map.getBearing();
+            map.setProjection({ type: "globe" });
+            map.jumpTo({ pitch: 0, bearing: 0 });
+            globeLabel.textContent = "Mercator";
+          } else {
+            map.setProjection({ type: "mercator" });
+            map.jumpTo({ pitch: savedPitch, bearing: savedBearing });
+            globeLabel.textContent = "Globe";
           }
         });
         const schemes = [

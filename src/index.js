@@ -253,14 +253,87 @@ class LineCallout3D {
       zoom > opts.maxZoom ||
       pitch < opts.minPitch ||
       pitch > opts.maxPitch
-    )
+    ) {
+      this._pool.forEach((e) => {
+        if (!e) return;
+        e.wrap.style.display = "none";
+        e.line.style.display = "none";
+        e.dot.style.display = "none";
+      });
       return;
+    }
+
+    const w = this.map.getContainer().clientWidth;
+    const h = this.map.getContainer().clientHeight;
+    const margin = 200;
+
+    const proj = this.map.getProjection();
+    const isGlobe = proj && proj.type === "globe";
+    let globeCamDir = null;
+    if (isGlobe) {
+      let camLatRad = null;
+      let camLngRad = null;
+      try {
+        const camPos = this.map.transform.getCameraPosition();
+        if (camPos) {
+          camLngRad = ((camPos.x * 360 - 180) * Math.PI) / 180;
+          camLatRad = 2 * Math.atan(Math.exp(Math.PI - 2 * Math.PI * camPos.y)) - Math.PI / 2;
+        }
+      } catch (e) {
+        // fallback below
+      }
+      if (camLatRad == null) {
+        const center = this.map.getCenter();
+        if (center) {
+          camLatRad = (center.lat * Math.PI) / 180;
+          camLngRad = (center.lng * Math.PI) / 180;
+        }
+      }
+      if (camLatRad != null) {
+        globeCamDir = [
+          Math.cos(camLatRad) * Math.cos(camLngRad),
+          Math.sin(camLatRad),
+          Math.cos(camLatRad) * Math.sin(camLngRad),
+        ];
+      }
+    }
 
     for (let i = 0; i < this._pool.length; i++) {
       const e = this._pool[i];
-      if (!e || e.wrap.style.display === "none" || !e._data) continue;
+      if (!e || !e._data) continue;
       const d = e._data;
       const anchor = this.map.project(d.coords);
+
+      if (globeCamDir) {
+        const toRad = Math.PI / 180;
+        const plat = d.coords[1] * toRad;
+        const plng = d.coords[0] * toRad;
+        const px = Math.cos(plat) * Math.cos(plng);
+        const py = Math.sin(plat);
+        const pz = Math.cos(plat) * Math.sin(plng);
+        const dot = globeCamDir[0] * px + globeCamDir[1] * py + globeCamDir[2] * pz;
+        if (dot <= 0.1) {
+          e.wrap.style.display = "none";
+          e.line.style.display = "none";
+          e.dot.style.display = "none";
+          continue;
+        }
+        e.wrap.dataset.angleDeg = ((Math.acos(Math.min(1, dot)) * 180) / Math.PI).toFixed(1);
+      }
+
+      const inside =
+        anchor.x >= -margin &&
+        anchor.x <= w + margin &&
+        anchor.y >= -margin &&
+        anchor.y <= h + margin;
+
+      if (!inside) {
+        e.wrap.style.display = "none";
+        e.line.style.display = "none";
+        e.dot.style.display = "none";
+        continue;
+      }
+
       const labelCenter = {
         x: anchor.x + d.offset[0] * d.mult,
         y: anchor.y + d.offset[1] * d.mult,
@@ -272,6 +345,9 @@ class LineCallout3D {
         d.connectSide || opts.connectSide,
       );
 
+      e.wrap.style.display = "";
+      e.line.style.display = "";
+      e.dot.style.display = "";
       e.wrap.style.left = Math.round(labelCenter.x) + "px";
       e.wrap.style.top = Math.round(labelCenter.y) + "px";
       e.line.setAttribute("x1", connector.x);
@@ -362,27 +438,92 @@ class LineCallout3D {
       return;
     }
 
-    const rendered = this.map.queryRenderedFeatures(undefined, { layers: [opts.markerLayerId] });
-
-    const seen = new Set();
+    const features = opts.data ? opts.data.features : [];
     const candidates = [];
-    for (let i = 0; i < rendered.length; i++) {
-      const f = rendered[i];
+    const seen = new Set();
+    const w = this.map.getContainer().clientWidth;
+    const h = this.map.getContainer().clientHeight;
+    const margin = 200;
+
+    const proj = this.map.getProjection();
+    const isGlobe = proj && proj.type === "globe";
+    let globeCamDir = null;
+    if (isGlobe) {
+      let camLatRad = null;
+      let camLngRad = null;
+      try {
+        const camPos = this.map.transform.getCameraPosition();
+        if (camPos) {
+          camLngRad = ((camPos.x * 360 - 180) * Math.PI) / 180;
+          camLatRad = 2 * Math.atan(Math.exp(Math.PI - 2 * Math.PI * camPos.y)) - Math.PI / 2;
+        }
+      } catch (e) {
+        // fallback below
+      }
+      if (camLatRad == null) {
+        const center = this.map.getCenter();
+        if (center) {
+          camLatRad = (center.lat * Math.PI) / 180;
+          camLngRad = (center.lng * Math.PI) / 180;
+        }
+      }
+      if (camLatRad != null) {
+        globeCamDir = [
+          Math.cos(camLatRad) * Math.cos(camLngRad),
+          Math.sin(camLatRad),
+          Math.cos(camLatRad) * Math.sin(camLngRad),
+        ];
+      }
+    }
+
+    for (let i = 0; i < features.length; i++) {
+      const f = features[i];
       const key = opts.idProperty ? f.properties[opts.idProperty] : f.id != null ? f.id : i;
       if (seen.has(key)) continue;
       seen.add(key);
       const anchorCoords = getFeatureAnchor(f);
       if (!anchorCoords) continue;
-      const anchor = this.map.project(anchorCoords);
-      const priorityValue = typeof opts.priority === "function" ? opts.priority(f.properties) : 0;
-      candidates.push({ feature: f, anchor, priorityValue, anchorCoords });
+
+      if (globeCamDir) {
+        const toRad = Math.PI / 180;
+        const plat = anchorCoords[1] * toRad;
+        const plng = anchorCoords[0] * toRad;
+        const px = Math.cos(plat) * Math.cos(plng);
+        const py = Math.sin(plat);
+        const pz = Math.cos(plat) * Math.sin(plng);
+        const dot = globeCamDir[0] * px + globeCamDir[1] * py + globeCamDir[2] * pz;
+        if (dot <= 0.1) continue;
+        const anchor = this.map.project(anchorCoords);
+        if (
+          anchor.x < -margin ||
+          anchor.x > w + margin ||
+          anchor.y < -margin ||
+          anchor.y > h + margin
+        )
+          continue;
+        const priorityValue = typeof opts.priority === "function" ? opts.priority(f.properties) : 0;
+        candidates.push({
+          feature: f,
+          anchor,
+          priorityValue,
+          anchorCoords,
+          globeAngle: (Math.acos(Math.min(1, dot)) * 180) / Math.PI,
+        });
+      } else {
+        const anchor = this.map.project(anchorCoords);
+        if (
+          anchor.x < -margin ||
+          anchor.x > w + margin ||
+          anchor.y < -margin ||
+          anchor.y > h + margin
+        )
+          continue;
+        const priorityValue = typeof opts.priority === "function" ? opts.priority(f.properties) : 0;
+        candidates.push({ feature: f, anchor, priorityValue, anchorCoords });
+      }
     }
 
-    candidates.sort((a, b) => b.priorityValue - a.priorityValue);
-
-    if (opts.maxLabels < Infinity) {
-      candidates.splice(opts.maxLabels * 3);
-    }
+    candidates.sort((a, b) => a.anchorCoords[1] - b.anchorCoords[1]);
 
     const placed = [];
     let poolIndex = 0;
@@ -390,7 +531,7 @@ class LineCallout3D {
     const mults = [];
     for (let m = 1; m <= opts.maxOffset; m += 0.5) mults.push(m);
 
-    for (let i = 0; i < candidates.length && placed.length < opts.maxLabels; i++) {
+    for (let i = 0; i < candidates.length; i++) {
       const c = candidates[i];
       const props = c.feature.properties;
       let placedLabel = null;
@@ -459,7 +600,20 @@ class LineCallout3D {
         if (placedLabel) break;
       }
 
-      if (placedLabel) placed.push(placedLabel);
+      if (placedLabel) {
+        if (placed.length < opts.maxLabels) {
+          placed.push(placedLabel);
+        } else {
+          let lowestIdx = 0;
+          for (let j = 1; j < placed.length; j++) {
+            if (placed[j].priorityValue < placed[lowestIdx].priorityValue) lowestIdx = j;
+          }
+          if (placedLabel.priorityValue > placed[lowestIdx].priorityValue) {
+            placed.splice(lowestIdx, 1);
+            placed.push(placedLabel);
+          }
+        }
+      }
     }
 
     placed.forEach((p) => {
@@ -514,7 +668,10 @@ class LineCallout3D {
         boxSize: p.boxSize,
         mult: p.mult,
         connectSide: p.connectSide,
+        globeAngle: p.globeAngle != null ? p.globeAngle : null,
       };
+      entry.wrap.dataset.angleDeg =
+        entry._data.globeAngle != null ? entry._data.globeAngle.toFixed(1) : "";
 
       if (opts.onClick) {
         entry.wrap.style.cursor = "pointer";
@@ -525,6 +682,48 @@ class LineCallout3D {
       }
     });
 
+    // Second pass — re-check collision with actual box sizes
+    const realRect = [];
+    const survivedIds = new Set();
+    const survivedColor = {};
+    for (let i = 0; i < placed.length; i++) {
+      const p = placed[i];
+      const entry = this._getPoolEntry(i);
+      const rw = entry.wrap.offsetWidth;
+      const rh = entry.wrap.offsetHeight;
+      const bw = rw > 0 ? rw : p.boxSize[0];
+      const bh = rh > 0 ? rh : p.boxSize[1];
+      const rect = {
+        x1: p.labelCenter.x - bw / 2,
+        x2: p.labelCenter.x + bw / 2,
+        y1: p.labelCenter.y - bh / 2,
+        y2: p.labelCenter.y + bh / 2,
+      };
+      if (realRect.some((a) => rectsOverlap(rect, a, opts.padding))) {
+        entry.wrap.style.display = "none";
+        entry.line.style.display = "none";
+        entry.dot.style.display = "none";
+        entry._data = null;
+      } else {
+        const realBoxSize = [bw, bh];
+        const conn = this._connectorPoint(
+          p.labelCenter,
+          realBoxSize,
+          p.anchor,
+          p.connectSide || opts.connectSide,
+        );
+        entry.line.setAttribute("x1", conn.x);
+        entry.line.setAttribute("y1", conn.y);
+        entry._data.boxSize = realBoxSize;
+        realRect.push(rect);
+        const fid = p.feature.id;
+        if (fid != null) {
+          survivedIds.add(fid);
+          survivedColor[fid] = resolveColor(opts.lineColor, p.feature.properties);
+        }
+      }
+    }
+
     for (let i = poolIndex; i < this._pool.length; i++) {
       this._pool[i].wrap.style.display = "none";
       this._pool[i].line.style.display = "none";
@@ -533,21 +732,18 @@ class LineCallout3D {
     }
 
     const sourceId = opts.sourceId;
-    const newColored = new Set();
-    for (const p of placed) {
-      const fid = p.feature.id;
-      if (fid != null) {
-        const color = resolveColor(opts.lineColor, p.feature.properties);
-        this.map.setFeatureState({ source: sourceId, id: fid }, { callout_color: color });
-        newColored.add(fid);
-      }
+    for (const fid of survivedIds) {
+      this.map.setFeatureState(
+        { source: sourceId, id: fid },
+        { callout_color: survivedColor[fid] },
+      );
     }
     for (const fid of this._coloredIds) {
-      if (!newColored.has(fid)) {
+      if (!survivedIds.has(fid)) {
         this.map.removeFeatureState({ source: sourceId, id: fid }, "callout_color");
       }
     }
-    this._coloredIds = newColored;
+    this._coloredIds = survivedIds;
   }
 }
 
