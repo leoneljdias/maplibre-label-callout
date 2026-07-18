@@ -1089,7 +1089,7 @@ class LineCallout3D {
         entry.line.setAttribute("y1", conn.y);
         entry._data.boxSize = realBoxSize;
         survivors.push({ rect, dotRect, anchor: p.anchor, connector: conn });
-        const fid = p.feature.id;
+        const fid = opts.idProperty ? p.feature.properties[opts.idProperty] : p.feature.id;
         if (fid != null) {
           survivedIds.add(fid);
           survivedColor[fid] = resolveColor(opts.lineColor, props);
@@ -1266,7 +1266,7 @@ class LineCallout3D {
             }
 
             survivors.push({ rect: realRect, dotRect, anchor: c.anchor, connector: realConn });
-            const fid = c.feature.id;
+            const fid = opts.idProperty ? c.feature.properties[opts.idProperty] : c.feature.id;
             if (fid != null) {
               survivedIds.add(fid);
               survivedColor[fid] = resolveColor(opts.lineColor, props);

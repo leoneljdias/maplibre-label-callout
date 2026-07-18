@@ -533,9 +533,10 @@ class LineCallout3D {
     }
 
     const features = (() => {
-      if (!globeCamDir) return this.map.queryRenderedFeatures(undefined, { layers: [opts.markerLayerId] });
+      if (!globeCamDir)
+        return this.map.queryRenderedFeatures(undefined, { layers: [opts.markerLayerId] });
       const qrf = this.map.queryRenderedFeatures(undefined, { layers: [opts.markerLayerId] });
-      return qrf.length > 0 ? qrf : (opts.data ? opts.data.features : []);
+      return qrf.length > 0 ? qrf : opts.data ? opts.data.features : [];
     })();
     const candidates = [];
     const seen = new Set();
@@ -1090,7 +1091,7 @@ class LineCallout3D {
         entry.line.setAttribute("y1", conn.y);
         entry._data.boxSize = realBoxSize;
         survivors.push({ rect, dotRect, anchor: p.anchor, connector: conn });
-        const fid = p.feature.id;
+        const fid = opts.idProperty ? p.feature.properties[opts.idProperty] : p.feature.id;
         if (fid != null) {
           survivedIds.add(fid);
           survivedColor[fid] = resolveColor(opts.lineColor, props);
@@ -1267,7 +1268,7 @@ class LineCallout3D {
             }
 
             survivors.push({ rect: realRect, dotRect, anchor: c.anchor, connector: realConn });
-            const fid = c.feature.id;
+            const fid = opts.idProperty ? c.feature.properties[opts.idProperty] : c.feature.id;
             if (fid != null) {
               survivedIds.add(fid);
               survivedColor[fid] = resolveColor(opts.lineColor, props);
