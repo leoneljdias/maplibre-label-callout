@@ -1289,16 +1289,17 @@ class LineCallout3D {
       this._pool[i]._data = null;
     }
 
-    const sourceId = opts.sourceId;
-    for (const fid of survivedIds) {
-      this.map.setFeatureState(
-        { source: sourceId, id: fid },
-        { callout_color: survivedColor[fid] },
-      );
-    }
-    for (const fid of this._coloredIds) {
-      if (!survivedIds.has(fid))
-        this.map.removeFeatureState({ source: sourceId, id: fid }, "callout_color");
+    if (this.map.getSource(opts.sourceId)) {
+      for (const fid of survivedIds) {
+        this.map.setFeatureState(
+          { source: opts.sourceId, id: fid },
+          { callout_color: survivedColor[fid] },
+        );
+      }
+      for (const fid of this._coloredIds) {
+        if (!survivedIds.has(fid))
+          this.map.removeFeatureState({ source: opts.sourceId, id: fid }, "callout_color");
+      }
     }
     this._coloredIds = survivedIds;
   }
