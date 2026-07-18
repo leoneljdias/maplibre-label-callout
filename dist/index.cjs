@@ -277,8 +277,12 @@ class LineCallout3D {
     const proj = this.map.getProjection();
     const isGlobe = proj && proj.type === "globe";
     if (isGlobe !== this._lastIsGlobe) {
-      if (isGlobe) { this._savedMaxPitch = this.map.getMaxPitch(); this.map.setMaxPitch(0); }
-      else { this.map.setMaxPitch(this._savedMaxPitch); }
+      if (isGlobe) {
+        this._savedMaxPitch = this.map.getMaxPitch();
+        this.map.setMaxPitch(0);
+      } else {
+        this.map.setMaxPitch(this._savedMaxPitch);
+      }
       this._lastIsGlobe = isGlobe;
     }
     let globeCamDir = null;
@@ -339,20 +343,38 @@ class LineCallout3D {
       const bw = d.boxSize[0];
       const bh = d.boxSize[1];
       const rect = {
-        x1: labelCenter.x - bw / 2, x2: labelCenter.x + bw / 2,
-        y1: labelCenter.y - bh / 2, y2: labelCenter.y + bh / 2,
+        x1: labelCenter.x - bw / 2,
+        x2: labelCenter.x + bw / 2,
+        y1: labelCenter.y - bh / 2,
+        y2: labelCenter.y + bh / 2,
       };
-      const conn = this._connectorPoint(labelCenter, d.boxSize, anchor, d.connectSide || opts.connectSide);
+      const conn = this._connectorPoint(
+        labelCenter,
+        d.boxSize,
+        anchor,
+        d.connectSide || opts.connectSide,
+      );
       const dotRad = d.dotRadius || 4;
       const dotRect = {
-        x1: anchor.x - dotRad, x2: anchor.x + dotRad,
-        y1: anchor.y - dotRad, y2: anchor.y + dotRad,
+        x1: anchor.x - dotRad,
+        x2: anchor.x + dotRad,
+        y1: anchor.y - dotRad,
+        y2: anchor.y + dotRad,
       };
 
       const inside =
-        rect.x2 >= -margin && rect.x1 <= w + margin && rect.y2 >= -margin && rect.y1 <= h + margin &&
-        conn.x >= -margin && conn.x <= w + margin && conn.y >= -margin && conn.y <= h + margin &&
-        dotRect.x2 >= -margin && dotRect.x1 <= w + margin && dotRect.y2 >= -margin && dotRect.y1 <= h + margin;
+        rect.x2 >= -margin &&
+        rect.x1 <= w + margin &&
+        rect.y2 >= -margin &&
+        rect.y1 <= h + margin &&
+        conn.x >= -margin &&
+        conn.x <= w + margin &&
+        conn.y >= -margin &&
+        conn.y <= h + margin &&
+        dotRect.x2 >= -margin &&
+        dotRect.x1 <= w + margin &&
+        dotRect.y2 >= -margin &&
+        dotRect.y1 <= h + margin;
 
       if (!inside) {
         e.wrap.style.display = "none";
@@ -436,13 +458,20 @@ class LineCallout3D {
     const left = { offset: [-hDist, 0], connectSide: "right" };
     const right = { offset: [hDist, 0], connectSide: "left" };
     switch (mode) {
-      case "onlyTop": return [top];
-      case "onlyBottom": return [bottom];
-      case "onlyLeft": return [left];
-      case "onlyRight": return [right];
-      case "onlyVertical": return [top, bottom];
-      case "onlyHorizontal": return [left, right];
-      default: return [top, bottom, left, right];
+      case "onlyTop":
+        return [top];
+      case "onlyBottom":
+        return [bottom];
+      case "onlyLeft":
+        return [left];
+      case "onlyRight":
+        return [right];
+      case "onlyVertical":
+        return [top, bottom];
+      case "onlyHorizontal":
+        return [left, right];
+      default:
+        return [top, bottom, left, right];
     }
   }
 
@@ -451,16 +480,29 @@ class LineCallout3D {
     const opts = this.opts;
     const zoom = this.map.getZoom();
     const pitch = this.map.getPitch();
-    if (zoom < opts.minZoom || zoom > opts.maxZoom || pitch < opts.minPitch || pitch > opts.maxPitch) {
-      this._pool.forEach((e) => { e.wrap.style.display = "none"; e.line.style.display = "none"; e.dot.style.display = "none"; });
+    if (
+      zoom < opts.minZoom ||
+      zoom > opts.maxZoom ||
+      pitch < opts.minPitch ||
+      pitch > opts.maxPitch
+    ) {
+      this._pool.forEach((e) => {
+        e.wrap.style.display = "none";
+        e.line.style.display = "none";
+        e.dot.style.display = "none";
+      });
       return;
     }
 
     const proj = this.map.getProjection();
     const isGlobe = proj && proj.type === "globe";
     if (isGlobe !== this._lastIsGlobe) {
-      if (isGlobe) { this._savedMaxPitch = this.map.getMaxPitch(); this.map.setMaxPitch(0); }
-      else { this.map.setMaxPitch(this._savedMaxPitch); }
+      if (isGlobe) {
+        this._savedMaxPitch = this.map.getMaxPitch();
+        this.map.setMaxPitch(0);
+      } else {
+        this.map.setMaxPitch(this._savedMaxPitch);
+      }
       this._lastIsGlobe = isGlobe;
     }
     let globeCamDir = null;
@@ -476,16 +518,25 @@ class LineCallout3D {
       } catch (e) {}
       if (camLatRad == null) {
         const center = this.map.getCenter();
-        if (center) { camLatRad = (center.lat * Math.PI) / 180; camLngRad = (center.lng * Math.PI) / 180; }
+        if (center) {
+          camLatRad = (center.lat * Math.PI) / 180;
+          camLngRad = (center.lng * Math.PI) / 180;
+        }
       }
       if (camLatRad != null) {
-        globeCamDir = [ Math.cos(camLatRad) * Math.cos(camLngRad), Math.sin(camLatRad), Math.cos(camLatRad) * Math.sin(camLngRad) ];
+        globeCamDir = [
+          Math.cos(camLatRad) * Math.cos(camLngRad),
+          Math.sin(camLatRad),
+          Math.cos(camLatRad) * Math.sin(camLngRad),
+        ];
       }
     }
 
-    const features = globeCamDir
-      ? (opts.data ? opts.data.features : [])
-      : this.map.queryRenderedFeatures(undefined, { layers: [opts.markerLayerId] });
+    const features = (() => {
+      if (!globeCamDir) return this.map.queryRenderedFeatures(undefined, { layers: [opts.markerLayerId] });
+      const qrf = this.map.queryRenderedFeatures(undefined, { layers: [opts.markerLayerId] });
+      return qrf.length > 0 ? qrf : (opts.data ? opts.data.features : []);
+    })();
     const candidates = [];
     const seen = new Set();
     const w = this.map.getContainer().clientWidth;
@@ -510,12 +561,30 @@ class LineCallout3D {
         const dot = globeCamDir[0] * px + globeCamDir[1] * py + globeCamDir[2] * pz;
         if (dot <= 0.1) continue;
         const anchor = this.map.project(anchorCoords);
-        if (anchor.x < -margin || anchor.x > w + margin || anchor.y < -margin || anchor.y > h + margin) continue;
+        if (
+          anchor.x < -margin ||
+          anchor.x > w + margin ||
+          anchor.y < -margin ||
+          anchor.y > h + margin
+        )
+          continue;
         const priorityValue = typeof opts.priority === "function" ? opts.priority(f.properties) : 0;
-        candidates.push({ feature: f, anchor, priorityValue, anchorCoords, globeAngle: (Math.acos(Math.min(1, dot)) * 180) / Math.PI });
+        candidates.push({
+          feature: f,
+          anchor,
+          priorityValue,
+          anchorCoords,
+          globeAngle: (Math.acos(Math.min(1, dot)) * 180) / Math.PI,
+        });
       } else {
         const anchor = this.map.project(anchorCoords);
-        if (anchor.x < -margin || anchor.x > w + margin || anchor.y < -margin || anchor.y > h + margin) continue;
+        if (
+          anchor.x < -margin ||
+          anchor.x > w + margin ||
+          anchor.y < -margin ||
+          anchor.y > h + margin
+        )
+          continue;
         const priorityValue = typeof opts.priority === "function" ? opts.priority(f.properties) : 0;
         candidates.push({ feature: f, anchor, priorityValue, anchorCoords });
       }
@@ -524,13 +593,15 @@ class LineCallout3D {
     // Spatial ordering: Z-order (Morton) over projected anchor coordinates
     // This replaces the latitude sort to avoid geographic bias — nearby screen
     // points are still nearby in Z-order, but no orientation dominates early placement.
-    const cellSize = opts.boxSize ? Math.max(opts.boxSize[0], opts.boxSize[1]) + opts.padding * 2 : 162;
+    const cellSize = opts.boxSize
+      ? Math.max(opts.boxSize[0], opts.boxSize[1]) + opts.padding * 2
+      : 162;
     const originX = -margin;
     const originY = -margin;
 
     function spreadBits(v) {
-      v = (v | (v << 8)) & 0x00FF00FF;
-      v = (v | (v << 4)) & 0x0F0F0F0F;
+      v = (v | (v << 8)) & 0x00ff00ff;
+      v = (v | (v << 4)) & 0x0f0f0f0f;
       v = (v | (v << 2)) & 0x33333333;
       v = (v | (v << 1)) & 0x55555555;
       return v;
@@ -548,7 +619,9 @@ class LineCallout3D {
     // avoiding O(n) scan of all placed labels.
     const gridCells = new Map();
 
-    function gridKey(col, row) { return col + ',' + row; }
+    function gridKey(col, row) {
+      return col + "," + row;
+    }
 
     function gridCellsForRect(x1, y1, x2, y2) {
       const minCol = Math.floor((x1 - opts.padding) / cellSize);
@@ -556,43 +629,137 @@ class LineCallout3D {
       const minRow = Math.floor((y1 - opts.padding) / cellSize);
       const maxRow = Math.floor((y2 + opts.padding) / cellSize);
       const keys = [];
-      for (let c = minCol; c <= maxCol; c++) for (let r = minRow; r <= maxRow; r++) keys.push(gridKey(c, r));
+      for (let c = minCol; c <= maxCol; c++)
+        for (let r = minRow; r <= maxRow; r++) keys.push(gridKey(c, r));
       return keys;
     }
 
     function gridInsert(pl) {
-      function add(keys) { for (const key of keys) { let cell = gridCells.get(key); if (!cell) { cell = new Set(); gridCells.set(key, cell); } cell.add(pl); } }
+      function add(keys) {
+        for (const key of keys) {
+          let cell = gridCells.get(key);
+          if (!cell) {
+            cell = new Set();
+            gridCells.set(key, cell);
+          }
+          cell.add(pl);
+        }
+      }
       add(gridCellsForRect(pl.rect.x1, pl.rect.y1, pl.rect.x2, pl.rect.y2));
-      if (pl.dotRect) add(gridCellsForRect(pl.dotRect.x1, pl.dotRect.y1, pl.dotRect.x2, pl.dotRect.y2));
-      if (pl.anchor && pl.connector) add(gridCellsForRect(Math.min(pl.anchor.x, pl.connector.x), Math.min(pl.anchor.y, pl.connector.y), Math.max(pl.anchor.x, pl.connector.x), Math.max(pl.anchor.y, pl.connector.y)));
+      if (pl.dotRect)
+        add(gridCellsForRect(pl.dotRect.x1, pl.dotRect.y1, pl.dotRect.x2, pl.dotRect.y2));
+      if (pl.anchor && pl.connector)
+        add(
+          gridCellsForRect(
+            Math.min(pl.anchor.x, pl.connector.x),
+            Math.min(pl.anchor.y, pl.connector.y),
+            Math.max(pl.anchor.x, pl.connector.x),
+            Math.max(pl.anchor.y, pl.connector.y),
+          ),
+        );
     }
 
     function gridQuery(rect, dotRect, anchor, connector) {
       const seen = new Set();
       const result = [];
-      function add(keys) { for (const key of keys) { const cell = gridCells.get(key); if (cell) for (const pl of cell) if (!seen.has(pl)) { seen.add(pl); result.push(pl); } } }
+      function add(keys) {
+        for (const key of keys) {
+          const cell = gridCells.get(key);
+          if (cell)
+            for (const pl of cell)
+              if (!seen.has(pl)) {
+                seen.add(pl);
+                result.push(pl);
+              }
+        }
+      }
       add(gridCellsForRect(rect.x1, rect.y1, rect.x2, rect.y2));
       if (dotRect) add(gridCellsForRect(dotRect.x1, dotRect.y1, dotRect.x2, dotRect.y2));
-      if (anchor && connector) add(gridCellsForRect(Math.min(anchor.x, connector.x), Math.min(anchor.y, connector.y), Math.max(anchor.x, connector.x), Math.max(anchor.y, connector.y)));
+      if (anchor && connector)
+        add(
+          gridCellsForRect(
+            Math.min(anchor.x, connector.x),
+            Math.min(anchor.y, connector.y),
+            Math.max(anchor.x, connector.x),
+            Math.max(anchor.y, connector.y),
+          ),
+        );
       return result;
     }
 
     function gridRemove(pl) {
-      function remove(keys) { for (const key of keys) { const cell = gridCells.get(key); if (cell) { cell.delete(pl); if (cell.size === 0) gridCells.delete(key); } } }
+      function remove(keys) {
+        for (const key of keys) {
+          const cell = gridCells.get(key);
+          if (cell) {
+            cell.delete(pl);
+            if (cell.size === 0) gridCells.delete(key);
+          }
+        }
+      }
       remove(gridCellsForRect(pl.rect.x1, pl.rect.y1, pl.rect.x2, pl.rect.y2));
-      if (pl.dotRect) remove(gridCellsForRect(pl.dotRect.x1, pl.dotRect.y1, pl.dotRect.x2, pl.dotRect.y2));
-      if (pl.anchor && pl.connector) remove(gridCellsForRect(Math.min(pl.anchor.x, pl.connector.x), Math.min(pl.anchor.y, pl.connector.y), Math.max(pl.anchor.x, pl.connector.x), Math.max(pl.anchor.y, pl.connector.y)));
+      if (pl.dotRect)
+        remove(gridCellsForRect(pl.dotRect.x1, pl.dotRect.y1, pl.dotRect.x2, pl.dotRect.y2));
+      if (pl.anchor && pl.connector)
+        remove(
+          gridCellsForRect(
+            Math.min(pl.anchor.x, pl.connector.x),
+            Math.min(pl.anchor.y, pl.connector.y),
+            Math.max(pl.anchor.x, pl.connector.x),
+            Math.max(pl.anchor.y, pl.connector.y),
+          ),
+        );
     }
 
     // Exact collision check between two placed-label objects (same 8 tests as original)
     function collidesWith(a, b) {
       if (rectsOverlap(a.rect, b.rect, opts.padding)) return true;
-      if (lineRectIntersect(a.anchor.x, a.anchor.y, a.connector.x, a.connector.y, b.rect, opts.padding)) return true;
-      if (lineRectIntersect(b.anchor.x, b.anchor.y, b.connector.x, b.connector.y, a.rect, opts.padding)) return true;
+      if (
+        lineRectIntersect(
+          a.anchor.x,
+          a.anchor.y,
+          a.connector.x,
+          a.connector.y,
+          b.rect,
+          opts.padding,
+        )
+      )
+        return true;
+      if (
+        lineRectIntersect(
+          b.anchor.x,
+          b.anchor.y,
+          b.connector.x,
+          b.connector.y,
+          a.rect,
+          opts.padding,
+        )
+      )
+        return true;
       if (rectsOverlap(a.rect, b.dotRect, opts.padding)) return true;
       if (rectsOverlap(a.dotRect, b.rect, opts.padding)) return true;
-      if (lineRectIntersect(a.anchor.x, a.anchor.y, a.connector.x, a.connector.y, b.dotRect, opts.padding)) return true;
-      if (lineRectIntersect(b.anchor.x, b.anchor.y, b.connector.x, b.connector.y, a.dotRect, opts.padding)) return true;
+      if (
+        lineRectIntersect(
+          a.anchor.x,
+          a.anchor.y,
+          a.connector.x,
+          a.connector.y,
+          b.dotRect,
+          opts.padding,
+        )
+      )
+        return true;
+      if (
+        lineRectIntersect(
+          b.anchor.x,
+          b.anchor.y,
+          b.connector.x,
+          b.connector.y,
+          a.dotRect,
+          opts.padding,
+        )
+      )
+        return true;
       if (segSegIntersect(a.anchor, a.connector, b.anchor, b.connector)) return true;
       return false;
     }
@@ -620,14 +787,36 @@ class LineCallout3D {
       for (const pos of positions) {
         const offset = pos.offset;
         for (const mult of mults) {
-          const labelCenter = { x: c.anchor.x + offset[0] * mult, y: c.anchor.y + offset[1] * mult };
-          const rect = { x1: labelCenter.x - bw / 2, x2: labelCenter.x + bw / 2, y1: labelCenter.y - bh / 2, y2: labelCenter.y + bh / 2 };
-          const connector = this._connectorPoint(labelCenter, boxSize, c.anchor, pos.connectSide || opts.connectSide);
+          const labelCenter = {
+            x: c.anchor.x + offset[0] * mult,
+            y: c.anchor.y + offset[1] * mult,
+          };
+          const rect = {
+            x1: labelCenter.x - bw / 2,
+            x2: labelCenter.x + bw / 2,
+            y1: labelCenter.y - bh / 2,
+            y2: labelCenter.y + bh / 2,
+          };
+          const connector = this._connectorPoint(
+            labelCenter,
+            boxSize,
+            c.anchor,
+            pos.connectSide || opts.connectSide,
+          );
           const dx = connector.x - c.anchor.x;
           const dy = connector.y - c.anchor.y;
-          if (Math.sqrt(dx * dx + dy * dy) < opts.minLineLength || Math.sqrt(dx * dx + dy * dy) > opts.maxLineLength) continue;
+          if (
+            Math.sqrt(dx * dx + dy * dy) < opts.minLineLength ||
+            Math.sqrt(dx * dx + dy * dy) > opts.maxLineLength
+          )
+            continue;
           const dotRad = resolveColor(opts.dotRadius, props) || 4;
-          const dotRect = { x1: c.anchor.x - dotRad, x2: c.anchor.x + dotRad, y1: c.anchor.y - dotRad, y2: c.anchor.y + dotRad };
+          const dotRect = {
+            x1: c.anchor.x - dotRad,
+            x2: c.anchor.x + dotRad,
+            y1: c.anchor.y - dotRad,
+            y2: c.anchor.y + dotRad,
+          };
 
           if (rect.x2 < 0 || rect.x1 > w || rect.y2 < 0 || rect.y1 > h) continue;
           if (connector.x < 0 || connector.x > w || connector.y < 0 || connector.y > h) continue;
@@ -636,11 +825,22 @@ class LineCallout3D {
           const neighbors = gridQuery(rect, dotRect, c.anchor, connector);
           const colliders = [];
           const candidatePl = { rect, dotRect, anchor: c.anchor, connector };
-          for (const pl of neighbors) { if (collidesWith(candidatePl, pl)) colliders.push(pl); }
+          for (const pl of neighbors) {
+            if (collidesWith(candidatePl, pl)) colliders.push(pl);
+          }
 
           if (colliders.length === 0) {
             if (placed.length < opts.maxLabels) {
-              bestPlacedLabel = Object.assign({}, c, { labelCenter, rect, connector, offset, boxSize, mult, connectSide: pos.connectSide, dotRect });
+              bestPlacedLabel = Object.assign({}, c, {
+                labelCenter,
+                rect,
+                connector,
+                offset,
+                boxSize,
+                mult,
+                connectSide: pos.connectSide,
+                dotRect,
+              });
             }
             break;
           } else {
@@ -650,9 +850,21 @@ class LineCallout3D {
               for (const p of colliders) {
                 gridRemove(p);
                 const idx = placed.indexOf(p);
-                if (idx !== -1) { placed.splice(idx, 1); if (!evictedOnce.has(p.feature)) evictedOnce.add(p.feature); }
+                if (idx !== -1) {
+                  placed.splice(idx, 1);
+                  if (!evictedOnce.has(p.feature)) evictedOnce.add(p.feature);
+                }
               }
-              bestPlacedLabel = Object.assign({}, c, { labelCenter, rect, connector, offset, boxSize, mult, connectSide: pos.connectSide, dotRect });
+              bestPlacedLabel = Object.assign({}, c, {
+                labelCenter,
+                rect,
+                connector,
+                offset,
+                boxSize,
+                mult,
+                connectSide: pos.connectSide,
+                dotRect,
+              });
               break;
             }
           }
@@ -660,7 +872,10 @@ class LineCallout3D {
         if (bestPlacedLabel) break;
       }
 
-      if (bestPlacedLabel) { placed.push(bestPlacedLabel); gridInsert(bestPlacedLabel); }
+      if (bestPlacedLabel) {
+        placed.push(bestPlacedLabel);
+        gridInsert(bestPlacedLabel);
+      }
     }
 
     // Retry evicted labels (one pass, no further eviction, depth limit 1)
@@ -678,14 +893,36 @@ class LineCallout3D {
         for (const pos of positions) {
           const offset = pos.offset;
           for (const mult of mults) {
-            const labelCenter = { x: c.anchor.x + offset[0] * mult, y: c.anchor.y + offset[1] * mult };
-            const rect = { x1: labelCenter.x - bw / 2, x2: labelCenter.x + bw / 2, y1: labelCenter.y - bh / 2, y2: labelCenter.y + bh / 2 };
-            const connector = this._connectorPoint(labelCenter, boxSize, c.anchor, pos.connectSide || opts.connectSide);
+            const labelCenter = {
+              x: c.anchor.x + offset[0] * mult,
+              y: c.anchor.y + offset[1] * mult,
+            };
+            const rect = {
+              x1: labelCenter.x - bw / 2,
+              x2: labelCenter.x + bw / 2,
+              y1: labelCenter.y - bh / 2,
+              y2: labelCenter.y + bh / 2,
+            };
+            const connector = this._connectorPoint(
+              labelCenter,
+              boxSize,
+              c.anchor,
+              pos.connectSide || opts.connectSide,
+            );
             const dx = connector.x - c.anchor.x;
             const dy = connector.y - c.anchor.y;
-            if (Math.sqrt(dx * dx + dy * dy) < opts.minLineLength || Math.sqrt(dx * dx + dy * dy) > opts.maxLineLength) continue;
+            if (
+              Math.sqrt(dx * dx + dy * dy) < opts.minLineLength ||
+              Math.sqrt(dx * dx + dy * dy) > opts.maxLineLength
+            )
+              continue;
             const dotRad = resolveColor(opts.dotRadius, props) || 4;
-            const dotRect = { x1: c.anchor.x - dotRad, x2: c.anchor.x + dotRad, y1: c.anchor.y - dotRad, y2: c.anchor.y + dotRad };
+            const dotRect = {
+              x1: c.anchor.x - dotRad,
+              x2: c.anchor.x + dotRad,
+              y1: c.anchor.y - dotRad,
+              y2: c.anchor.y + dotRad,
+            };
 
             if (rect.x2 < 0 || rect.x1 > w || rect.y2 < 0 || rect.y1 > h) continue;
             if (connector.x < 0 || connector.x > w || connector.y < 0 || connector.y > h) continue;
@@ -694,15 +931,32 @@ class LineCallout3D {
             const neighbors = gridQuery(rect, dotRect, c.anchor, connector);
             const candidatePl = { rect, dotRect, anchor: c.anchor, connector };
             let collides = false;
-            for (const pl of neighbors) { if (collidesWith(candidatePl, pl)) { collides = true; break; } }
+            for (const pl of neighbors) {
+              if (collidesWith(candidatePl, pl)) {
+                collides = true;
+                break;
+              }
+            }
             if (!collides) {
-              placedLabel = Object.assign({}, c, { labelCenter, rect, connector, offset, boxSize, mult, connectSide: pos.connectSide, dotRect });
+              placedLabel = Object.assign({}, c, {
+                labelCenter,
+                rect,
+                connector,
+                offset,
+                boxSize,
+                mult,
+                connectSide: pos.connectSide,
+                dotRect,
+              });
               break;
             }
           }
           if (placedLabel) break;
         }
-        if (placedLabel) { placed.push(placedLabel); gridInsert(placedLabel); }
+        if (placedLabel) {
+          placed.push(placedLabel);
+          gridInsert(placedLabel);
+        }
       }
     }
 
@@ -743,9 +997,22 @@ class LineCallout3D {
       entry.dot.setAttribute("cy", p.anchor.y);
       entry.dot.setAttribute("r", String(dotRadius));
       entry.dot.setAttribute("fill", dotColor);
-      entry._data = { coords: p.anchorCoords, offset: p.offset, boxSize: p.boxSize, mult: p.mult, connectSide: p.connectSide, globeAngle: p.globeAngle != null ? p.globeAngle : null, dotRadius };
-      if (opts.onClick) { entry.wrap.style.cursor = "pointer"; entry.wrap.onclick = (e) => opts.onClick(props, p.feature, e); }
-      else { entry.wrap.style.cursor = ""; entry.wrap.onclick = null; }
+      entry._data = {
+        coords: p.anchorCoords,
+        offset: p.offset,
+        boxSize: p.boxSize,
+        mult: p.mult,
+        connectSide: p.connectSide,
+        globeAngle: p.globeAngle != null ? p.globeAngle : null,
+        dotRadius,
+      };
+      if (opts.onClick) {
+        entry.wrap.style.cursor = "pointer";
+        entry.wrap.onclick = (e) => opts.onClick(props, p.feature, e);
+      } else {
+        entry.wrap.style.cursor = "";
+        entry.wrap.onclick = null;
+      }
     });
 
     // Second pass — re-check collision with actual box sizes (offsetWidth/height)
@@ -759,20 +1026,57 @@ class LineCallout3D {
       const rh = entry.wrap.offsetHeight;
       const bw = rw > 0 ? rw : p.boxSize[0];
       const bh = rh > 0 ? rh : p.boxSize[1];
-      const rect = { x1: p.labelCenter.x - bw / 2, x2: p.labelCenter.x + bw / 2, y1: p.labelCenter.y - bh / 2, y2: p.labelCenter.y + bh / 2 };
+      const rect = {
+        x1: p.labelCenter.x - bw / 2,
+        x2: p.labelCenter.x + bw / 2,
+        y1: p.labelCenter.y - bh / 2,
+        y2: p.labelCenter.y + bh / 2,
+      };
       const props = p.feature.properties;
       const dotRad = resolveColor(opts.dotRadius, props) || 4;
-      const dotRect = { x1: p.anchor.x - dotRad, x2: p.anchor.x + dotRad, y1: p.anchor.y - dotRad, y2: p.anchor.y + dotRad };
+      const dotRect = {
+        x1: p.anchor.x - dotRad,
+        x2: p.anchor.x + dotRad,
+        y1: p.anchor.y - dotRad,
+        y2: p.anchor.y + dotRad,
+      };
       const realBoxSize = [bw, bh];
-      const conn = this._connectorPoint(p.labelCenter, realBoxSize, p.anchor, p.connectSide || opts.connectSide);
+      const conn = this._connectorPoint(
+        p.labelCenter,
+        realBoxSize,
+        p.anchor,
+        p.connectSide || opts.connectSide,
+      );
       const collides = survivors.some((a) => {
         if (rectsOverlap(rect, a.rect, opts.padding)) return true;
-        if (lineRectIntersect(p.anchor.x, p.anchor.y, conn.x, conn.y, a.rect, opts.padding)) return true;
-        if (lineRectIntersect(a.anchor.x, a.anchor.y, a.connector.x, a.connector.y, rect, opts.padding)) return true;
+        if (lineRectIntersect(p.anchor.x, p.anchor.y, conn.x, conn.y, a.rect, opts.padding))
+          return true;
+        if (
+          lineRectIntersect(
+            a.anchor.x,
+            a.anchor.y,
+            a.connector.x,
+            a.connector.y,
+            rect,
+            opts.padding,
+          )
+        )
+          return true;
         if (rectsOverlap(rect, a.dotRect, opts.padding)) return true;
         if (rectsOverlap(dotRect, a.rect, opts.padding)) return true;
-        if (lineRectIntersect(p.anchor.x, p.anchor.y, conn.x, conn.y, a.dotRect, opts.padding)) return true;
-        if (lineRectIntersect(a.anchor.x, a.anchor.y, a.connector.x, a.connector.y, dotRect, opts.padding)) return true;
+        if (lineRectIntersect(p.anchor.x, p.anchor.y, conn.x, conn.y, a.dotRect, opts.padding))
+          return true;
+        if (
+          lineRectIntersect(
+            a.anchor.x,
+            a.anchor.y,
+            a.connector.x,
+            a.connector.y,
+            dotRect,
+            opts.padding,
+          )
+        )
+          return true;
         if (segSegIntersect(p.anchor, conn, a.anchor, a.connector)) return true;
         return false;
       });
@@ -787,7 +1091,10 @@ class LineCallout3D {
         entry._data.boxSize = realBoxSize;
         survivors.push({ rect, dotRect, anchor: p.anchor, connector: conn });
         const fid = p.feature.id;
-        if (fid != null) { survivedIds.add(fid); survivedColor[fid] = resolveColor(opts.lineColor, props); }
+        if (fid != null) {
+          survivedIds.add(fid);
+          survivedColor[fid] = resolveColor(opts.lineColor, props);
+        }
       }
     }
 
@@ -823,14 +1130,36 @@ class LineCallout3D {
         for (const pos of positions) {
           const offset = pos.offset;
           for (const mult of mults) {
-            const labelCenter = { x: c.anchor.x + offset[0] * mult, y: c.anchor.y + offset[1] * mult };
-            const rect = { x1: labelCenter.x - bw / 2, x2: labelCenter.x + bw / 2, y1: labelCenter.y - bh / 2, y2: labelCenter.y + bh / 2 };
-            const connector = this._connectorPoint(labelCenter, boxSize, c.anchor, pos.connectSide || opts.connectSide);
+            const labelCenter = {
+              x: c.anchor.x + offset[0] * mult,
+              y: c.anchor.y + offset[1] * mult,
+            };
+            const rect = {
+              x1: labelCenter.x - bw / 2,
+              x2: labelCenter.x + bw / 2,
+              y1: labelCenter.y - bh / 2,
+              y2: labelCenter.y + bh / 2,
+            };
+            const connector = this._connectorPoint(
+              labelCenter,
+              boxSize,
+              c.anchor,
+              pos.connectSide || opts.connectSide,
+            );
             const dx = connector.x - c.anchor.x;
             const dy = connector.y - c.anchor.y;
-            if (Math.sqrt(dx * dx + dy * dy) < opts.minLineLength || Math.sqrt(dx * dx + dy * dy) > opts.maxLineLength) continue;
+            if (
+              Math.sqrt(dx * dx + dy * dy) < opts.minLineLength ||
+              Math.sqrt(dx * dx + dy * dy) > opts.maxLineLength
+            )
+              continue;
             const dotRad = resolveColor(opts.dotRadius, props) || 4;
-            const dotRect = { x1: c.anchor.x - dotRad, x2: c.anchor.x + dotRad, y1: c.anchor.y - dotRad, y2: c.anchor.y + dotRad };
+            const dotRect = {
+              x1: c.anchor.x - dotRad,
+              x2: c.anchor.x + dotRad,
+              y1: c.anchor.y - dotRad,
+              y2: c.anchor.y + dotRad,
+            };
 
             if (rect.x2 < 0 || rect.x1 > w || rect.y2 < 0 || rect.y1 > h) continue;
             if (connector.x < 0 || connector.x > w || connector.y < 0 || connector.y > h) continue;
@@ -840,7 +1169,10 @@ class LineCallout3D {
             const candidatePl = { rect, dotRect, anchor: c.anchor, connector };
             let collides = false;
             for (const s of survivors) {
-              if (collidesWith(candidatePl, s)) { collides = true; break; }
+              if (collidesWith(candidatePl, s)) {
+                collides = true;
+                break;
+              }
             }
             if (collides) continue;
 
@@ -868,13 +1200,26 @@ class LineCallout3D {
             const realBw = rw > 0 ? rw : bw;
             const realBh = rh > 0 ? rh : bh;
             const realBoxSize = [realBw, realBh];
-            const realRect = { x1: labelCenter.x - realBw / 2, x2: labelCenter.x + realBw / 2, y1: labelCenter.y - realBh / 2, y2: labelCenter.y + realBh / 2 };
-            const realConn = this._connectorPoint(labelCenter, realBoxSize, c.anchor, pos.connectSide || opts.connectSide);
+            const realRect = {
+              x1: labelCenter.x - realBw / 2,
+              x2: labelCenter.x + realBw / 2,
+              y1: labelCenter.y - realBh / 2,
+              y2: labelCenter.y + realBh / 2,
+            };
+            const realConn = this._connectorPoint(
+              labelCenter,
+              realBoxSize,
+              c.anchor,
+              pos.connectSide || opts.connectSide,
+            );
 
             const realPl = { rect: realRect, dotRect, anchor: c.anchor, connector: realConn };
             let realCollides = false;
             for (const s of survivors) {
-              if (collidesWith(realPl, s)) { realCollides = true; break; }
+              if (collidesWith(realPl, s)) {
+                realCollides = true;
+                break;
+              }
             }
 
             if (realCollides) {
@@ -904,13 +1249,29 @@ class LineCallout3D {
             entry.dot.setAttribute("cy", c.anchor.y);
             entry.dot.setAttribute("r", String(dotRadius));
             entry.dot.setAttribute("fill", dotColor);
-            entry._data = { coords: c.anchorCoords, offset, boxSize: realBoxSize, mult, connectSide: pos.connectSide, globeAngle: c.globeAngle != null ? c.globeAngle : null, dotRadius };
-            if (opts.onClick) { entry.wrap.style.cursor = "pointer"; entry.wrap.onclick = (e) => opts.onClick(props, c.feature, e); }
-            else { entry.wrap.style.cursor = ""; entry.wrap.onclick = null; }
+            entry._data = {
+              coords: c.anchorCoords,
+              offset,
+              boxSize: realBoxSize,
+              mult,
+              connectSide: pos.connectSide,
+              globeAngle: c.globeAngle != null ? c.globeAngle : null,
+              dotRadius,
+            };
+            if (opts.onClick) {
+              entry.wrap.style.cursor = "pointer";
+              entry.wrap.onclick = (e) => opts.onClick(props, c.feature, e);
+            } else {
+              entry.wrap.style.cursor = "";
+              entry.wrap.onclick = null;
+            }
 
             survivors.push({ rect: realRect, dotRect, anchor: c.anchor, connector: realConn });
             const fid = c.feature.id;
-            if (fid != null) { survivedIds.add(fid); survivedColor[fid] = resolveColor(opts.lineColor, props); }
+            if (fid != null) {
+              survivedIds.add(fid);
+              survivedColor[fid] = resolveColor(opts.lineColor, props);
+            }
             backfillPlaced.add(c);
             placedInRound++;
             placed = true;
@@ -931,10 +1292,14 @@ class LineCallout3D {
 
     const sourceId = opts.sourceId;
     for (const fid of survivedIds) {
-      this.map.setFeatureState({ source: sourceId, id: fid }, { callout_color: survivedColor[fid] });
+      this.map.setFeatureState(
+        { source: sourceId, id: fid },
+        { callout_color: survivedColor[fid] },
+      );
     }
     for (const fid of this._coloredIds) {
-      if (!survivedIds.has(fid)) this.map.removeFeatureState({ source: sourceId, id: fid }, "callout_color");
+      if (!survivedIds.has(fid))
+        this.map.removeFeatureState({ source: sourceId, id: fid }, "callout_color");
     }
     this._coloredIds = survivedIds;
   }
