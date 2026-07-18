@@ -532,12 +532,7 @@ class LineCallout3D {
       }
     }
 
-    const features = (() => {
-      if (!globeCamDir)
-        return this.map.queryRenderedFeatures(undefined, { layers: [opts.markerLayerId] });
-      const qrf = this.map.queryRenderedFeatures(undefined, { layers: [opts.markerLayerId] });
-      return qrf.length > 0 ? qrf : opts.data ? opts.data.features : [];
-    })();
+    const features = opts.data ? opts.data.features : [];
     const candidates = [];
     const seen = new Set();
     const w = this.map.getContainer().clientWidth;
